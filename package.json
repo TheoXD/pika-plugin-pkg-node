@@ -24,7 +24,7 @@
   "dependencies": {
     "@pika/types": "^0.8.1",
     "fs-extra": "^8.1.0",
-    "pkg": "^4.4.0"
+    "pkg": "^5.5.1"
   },
   "devDependencies": {
     "@pika/pack": "^0.5.0",
