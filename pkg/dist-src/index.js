@@ -1,0 +1,55 @@
+/**
+ * Copyright © 2019 kevinpollet <pollet.kevin@gmail.com>`
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE.md file.
+ */
+import fs from "fs-extra";
+import { join } from "path";
+import { exec } from "pkg";
+import { MessageError } from "@pika/types";
+export const beforeJob = async ({ manifest, options, out, }) => {
+    const packageJSONPath = join(out, "package.json");
+    const distNodeFolderPath = join(out, "dist-node");
+    const simpleBinEntrypointPath = join(distNodeFolderPath, "index.bin.js");
+    const mainEntrypointPath = join(distNodeFolderPath, manifest.main || "index.js");
+    const distNodeFolderPathExists = await fs.pathExists(distNodeFolderPath);
+    if (!distNodeFolderPathExists) {
+        throw new MessageError(`"${distNodeFolderPath}" does not exist, or was not yet created in the pipeline.`);
+    }
+    const mainEntrypointPathExists = await fs.pathExists(mainEntrypointPath);
+    if (!mainEntrypointPathExists) {
+        throw new MessageError(`"${mainEntrypointPath}" is the expected node entrypoint, but it does not exist.`);
+    }
+    const simpleBinEntrypointPathExists = await fs.pathExists(simpleBinEntrypointPath);
+    const binEntrypointPath = simpleBinEntrypointPathExists
+        ? simpleBinEntrypointPath
+        : manifest.bin;
+    return fs.writeJSON(packageJSONPath, {
+        name: (options.name || manifest.name) + "-dist",
+        bin: binEntrypointPath,
+        main: mainEntrypointPath,
+        pkg: {
+            assets: options.assets || [],
+            scripts: options.scripts || [],
+        },
+    });
+};
+export const build = ({ options, out, reporter, }) => {
+    const { debug, targets } = options;
+    const outPath = join(out, options.outPath || "bin");
+    const args = [out, "--out-path", outPath];
+    if (debug) {
+        args.push("--debug");
+    }
+    if (targets) {
+        args.push("--targets", targets.join(","));
+    }
+    return exec(args)
+        .then(() => fs.readdir(outPath))
+        .then((generatedFiles) => generatedFiles.forEach((generatedFile) => reporter.created(join(outPath, generatedFile))));
+};
+export const afterJob = ({ out }) => {
+    const packageJSONPath = join(out, "package.json");
+    return fs.remove(packageJSONPath);
+};
