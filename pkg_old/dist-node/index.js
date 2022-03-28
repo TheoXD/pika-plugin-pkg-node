@@ -39,7 +39,7 @@ const beforeJob = async ({
   const simpleBinEntrypointPathExists = await fs.pathExists(simpleBinEntrypointPath);
   const binEntrypointPath = simpleBinEntrypointPathExists ? simpleBinEntrypointPath : manifest.bin;
   return fs.writeJSON(packageJSONPath, {
-    name: options.name || manifest.name,
+    name: (options.name || manifest.name) + "-dist",
     bin: binEntrypointPath,
     main: mainEntrypointPath,
     pkg: {

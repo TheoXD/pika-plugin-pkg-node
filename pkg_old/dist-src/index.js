@@ -26,7 +26,7 @@ export const beforeJob = async ({ manifest, options, out, }) => {
         ? simpleBinEntrypointPath
         : manifest.bin;
     return fs.writeJSON(packageJSONPath, {
-        name: options.name || manifest.name,
+        name: (options.name || manifest.name) + "-dist",
         bin: binEntrypointPath,
         main: mainEntrypointPath,
         pkg: {
